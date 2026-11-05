@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'providers/color_provider.dart';
 import 'repositories/color_repository.dart';
 import 'services/color_api_service.dart';
+import 'screens/explore_page.dart';
 
 void main() {
   runApp(
@@ -30,8 +31,7 @@ class ColorMateApp extends StatelessWidget {
       title: 'ColorMate',
       theme: ThemeData(
         useMaterial3: true,
-        fontFamily: 'Arial',
-        scaffoldBackgroundColor: const Color(0xFFF9F8FF),
+        scaffoldBackgroundColor: const Color(0xFFF8F7FC),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF8065F6),
           brightness: Brightness.light,
@@ -50,16 +50,28 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int selectedIndex = 0;
+  int _selectedIndex = 0;
 
-  final List<String> titles = ['Home', 'Explore', 'Collection', 'Contrast'];
-
-  final List<IconData> icons = [
-    Icons.home_rounded,
-    Icons.palette_rounded,
-    Icons.bookmark_rounded,
-    Icons.contrast_rounded,
+  final List<Widget> _pages = const [
+    HomeScreen(),
+    ExplorePage(),
+    FeatureScreen(
+      title: 'My Collection',
+      subtitle: 'Your saved color palettes will appear here.',
+      icon: Icons.collections_rounded,
+    ),
+    FeatureScreen(
+      title: 'Contrast Checker',
+      subtitle: 'Check color contrast and accessibility.',
+      icon: Icons.contrast_rounded,
+    ),
   ];
+
+  void _onDestinationSelected(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,82 +79,80 @@ class _MainShellState extends State<MainShell> {
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 700;
 
-        final pages = [
-          HomeScreen(
-            onNavigate: (index) {
-              setState(() => selectedIndex = index);
-            },
-          ),
-          const FeatureScreen(
-            title: 'Explore Colors',
-            subtitle: 'Find your next favorite color.',
-            icon: Icons.palette_rounded,
-            color: Color(0xFFFF8A9B),
-          ),
-          const FeatureScreen(
-            title: 'My Collection',
-            subtitle: 'Your saved color palettes.',
-            icon: Icons.bookmark_rounded,
-            color: Color(0xFF70C9B0),
-          ),
-          const FeatureScreen(
-            title: 'Contrast Checker',
-            subtitle: 'Make your designs easier to read.',
-            icon: Icons.contrast_rounded,
-            color: Color(0xFF8B78F6),
-          ),
-        ];
-
         return Scaffold(
-          body: SafeArea(
-            child: Row(
-              children: [
-                if (isWide)
-                  NavigationRail(
-                    selectedIndex: selectedIndex,
-                    onDestinationSelected: (index) {
-                      setState(() => selectedIndex = index);
-                    },
-                    labelType: NavigationRailLabelType.all,
-                    backgroundColor: Colors.white,
-                    leading: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 28),
-                      child: Icon(
-                        Icons.color_lens_rounded,
-                        size: 34,
-                        color: Color(0xFF8065F6),
-                      ),
-                    ),
-                    destinations: List.generate(
-                      titles.length,
-                      (index) => NavigationRailDestination(
-                        icon: Icon(icons[index]),
-                        label: Text(titles[index]),
-                      ),
+          body: Row(
+            children: [
+              if (isWide)
+                NavigationRail(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onDestinationSelected,
+                  labelType: NavigationRailLabelType.all,
+                  backgroundColor: Colors.white,
+                  leading: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Icon(
+                      Icons.palette_rounded,
+                      color: Color(0xFF8065F6),
+                      size: 32,
                     ),
                   ),
-                Expanded(
-                  child: IndexedStack(index: selectedIndex, children: pages),
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home_rounded),
+                      label: Text('Home'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.color_lens_outlined),
+                      selectedIcon: Icon(Icons.color_lens_rounded),
+                      label: Text('Explore'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.collections_outlined),
+                      selectedIcon: Icon(Icons.collections_rounded),
+                      label: Text('Collection'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.contrast_outlined),
+                      selectedIcon: Icon(Icons.contrast_rounded),
+                      label: Text('Contrast'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              Expanded(
+                child: IndexedStack(index: _selectedIndex, children: _pages),
+              ),
+            ],
           ),
           bottomNavigationBar: isWide
               ? null
               : NavigationBar(
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: (index) {
-                    setState(() => selectedIndex = index);
-                  },
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onDestinationSelected,
                   backgroundColor: Colors.white,
-                  indicatorColor: const Color(0xFFECE7FF),
-                  destinations: List.generate(
-                    titles.length,
-                    (index) => NavigationDestination(
-                      icon: Icon(icons[index]),
-                      label: titles[index],
+                  indicatorColor: const Color(0xFFEAE5FF),
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home_rounded),
+                      label: 'Home',
                     ),
-                  ),
+                    NavigationDestination(
+                      icon: Icon(Icons.color_lens_outlined),
+                      selectedIcon: Icon(Icons.color_lens_rounded),
+                      label: 'Explore',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.collections_outlined),
+                      selectedIcon: Icon(Icons.collections_rounded),
+                      label: 'Collection',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.contrast_outlined),
+                      selectedIcon: Icon(Icons.contrast_rounded),
+                      label: 'Contrast',
+                    ),
+                  ],
                 ),
         );
       },
@@ -151,192 +161,197 @@ class _MainShellState extends State<MainShell> {
 }
 
 class HomeScreen extends StatelessWidget {
-  final ValueChanged<int> onNavigate;
-
-  const HomeScreen({super.key, required this.onNavigate});
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 800;
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F7FC),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 800;
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(isWide ? 32 : 22),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Expanded(
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEAE5FF),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.palette_rounded,
+                              color: Color(0xFF8065F6),
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'ColorMate',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          const CircleAvatar(
+                            backgroundColor: Color(0xFFFFE3EC),
+                            child: Icon(
+                              Icons.person_rounded,
+                              color: Color(0xFFE85D8E),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(28),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF8065F6),
+                              Color(0xFFB47CF5),
+                              Color(0xFFFF8EAB),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(28),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Hello, Designer! 👋',
                               style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.black54,
+                                color: Colors.white,
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 5),
-                            Text(
-                              'ColorMate',
+                            const SizedBox(height: 10),
+                            const Text(
+                              'Find your perfect colors and create '
+                              'beautiful palettes for your next design.',
                               style: TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF29243B),
+                                color: Colors.white,
+                                fontSize: 15,
+                                height: 1.5,
                               ),
+                            ),
+                            const SizedBox(height: 22),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                context
+                                    .findAncestorStateOfType<_MainShellState>()
+                                    ?._onDestinationSelected(1);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: const Color(0xFF8065F6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              icon: const Icon(Icons.color_lens_rounded),
+                              label: const Text('Explore Colors'),
                             ),
                           ],
                         ),
                       ),
-                      const CircleAvatar(
-                        radius: 24,
-                        backgroundColor: Color(0xFFECE7FF),
-                        child: Icon(
-                          Icons.person_rounded,
-                          color: Color(0xFF8065F6),
-                          size: 28,
+
+                      const SizedBox(height: 32),
+
+                      const Text(
+                        'Discover Features',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 26),
+                      const SizedBox(height: 16),
 
-                  // Welcome Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF8065F6),
-                          Color(0xFFB18CFF),
-                          Color(0xFFFF9AB5),
+                      GridView.count(
+                        crossAxisCount: isWide ? 3 : 2,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 14,
+                        childAspectRatio: isWide ? 1.35 : 1.05,
+                        children: [
+                          FeatureTile(
+                            title: 'Explore Colors',
+                            subtitle: 'Discover color combinations',
+                            icon: Icons.color_lens_rounded,
+                            color: const Color(0xFFEAE5FF),
+                            iconColor: const Color(0xFF8065F6),
+                            onTap: () {
+                              context
+                                  .findAncestorStateOfType<_MainShellState>()
+                                  ?._onDestinationSelected(1);
+                            },
+                          ),
+                          FeatureTile(
+                            title: 'My Collection',
+                            subtitle: 'Save your favorite palettes',
+                            icon: Icons.collections_rounded,
+                            color: const Color(0xFFFFE3EC),
+                            iconColor: const Color(0xFFE85D8E),
+                            onTap: () {
+                              context
+                                  .findAncestorStateOfType<_MainShellState>()
+                                  ?._onDestinationSelected(2);
+                            },
+                          ),
+                          FeatureTile(
+                            title: 'Contrast Checker',
+                            subtitle: 'Check color accessibility',
+                            icon: Icons.contrast_rounded,
+                            color: const Color(0xFFDDF5E8),
+                            iconColor: const Color(0xFF36A879),
+                            onTap: () {
+                              context
+                                  .findAncestorStateOfType<_MainShellState>()
+                                  ?._onDestinationSelected(3);
+                            },
+                          ),
                         ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Create something beautiful ✨',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 23,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          'Explore colors, build palettes, and design '
-                          'with better accessibility.',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        FilledButton(
-                          onPressed: () => onNavigate(1),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF8065F6),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 22,
-                              vertical: 13,
-                            ),
-                          ),
-                          child: const Text('Explore Colors'),
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  const SizedBox(height: 30),
-                  const Text(
-                    'What do you want to do?',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF29243B),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                      const SizedBox(height: 28),
 
-                  GridView.count(
-                    crossAxisCount: isWide ? 3 : 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                    childAspectRatio: isWide ? 1.5 : 1.05,
-                    children: [
-                      FeatureTile(
-                        title: 'Explore Colors',
-                        subtitle: 'Discover new shades',
-                        icon: Icons.palette_rounded,
-                        color: const Color(0xFFFF8A9B),
-                        onTap: () => onNavigate(1),
-                      ),
-                      FeatureTile(
-                        title: 'My Collection',
-                        subtitle: 'Save your palettes',
-                        icon: Icons.bookmark_rounded,
-                        color: const Color(0xFF70C9B0),
-                        onTap: () => onNavigate(2),
-                      ),
-                      FeatureTile(
-                        title: 'Contrast Checker',
-                        subtitle: 'Check color readability',
-                        icon: Icons.contrast_rounded,
-                        color: const Color(0xFF8B78F6),
-                        onTap: () => onNavigate(3),
-                      ),
-                      FeatureTile(
-                        title: 'Color Generator',
-                        subtitle: 'Create color palettes',
-                        icon: Icons.auto_awesome_rounded,
-                        color: const Color(0xFFFFB45E),
-                        onTap: () => onNavigate(1),
+                      const Text(
+                        'ColorMate helps you explore, create, '
+                        'and manage beautiful color palettes.',
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 28),
-                  const Text(
-                    'Color inspiration',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF29243B),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  const Row(
-                    children: [
-                      ColorDot(color: Color(0xFF8065F6)),
-                      ColorDot(color: Color(0xFFFF8A9B)),
-                      ColorDot(color: Color(0xFFFFC66E)),
-                      ColorDot(color: Color(0xFF70C9B0)),
-                      ColorDot(color: Color(0xFF77B8F5)),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                ),
               ),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -346,6 +361,7 @@ class FeatureTile extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final Color color;
+  final Color iconColor;
   final VoidCallback onTap;
 
   const FeatureTile({
@@ -354,6 +370,7 @@ class FeatureTile extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.color,
+    required this.iconColor,
     required this.onTap,
   });
 
@@ -369,55 +386,31 @@ class FeatureTile extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(11),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(15),
+                  color: color,
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: color, size: 25),
+                child: Icon(icon, color: iconColor, size: 25),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(fontSize: 11, color: Colors.black54),
-                  ),
-                ],
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                subtitle,
+                style: const TextStyle(color: Colors.black54, fontSize: 11),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class ColorDot extends StatelessWidget {
-  final Color color;
-
-  const ColorDot({super.key, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        height: 65,
-        margin: const EdgeInsets.only(right: 8),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
         ),
       ),
     );
@@ -428,52 +421,52 @@ class FeatureScreen extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
-  final Color color;
 
   const FeatureScreen({
     super.key,
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(30),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F7FC),
+      appBar: AppBar(
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFFF8F7FC),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAE5FF),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Icon(icon, size: 48, color: const Color(0xFF8065F6)),
               ),
-              child: Icon(icon, size: 55, color: color),
-            ),
-            const SizedBox(height: 22),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.black54),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              'Coming soon ✨',
-              style: TextStyle(
-                color: Color(0xFF8065F6),
-                fontWeight: FontWeight.w600,
+              const SizedBox(height: 20),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.black54, height: 1.5),
+              ),
+            ],
+          ),
         ),
       ),
     );
