@@ -1,7 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'providers/color_provider.dart';
+import 'repositories/color_repository.dart';
+import 'services/color_api_service.dart';
 
 void main() {
-  runApp(const ColorMateApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => ColorProvider(
+            repository: ColorRepository(apiService: ColorApiService()),
+          ),
+        ),
+      ],
+      child: const ColorMateApp(),
+    ),
+  );
 }
 
 class ColorMateApp extends StatelessWidget {
@@ -178,9 +194,9 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 24,
-                        backgroundColor: const Color(0xFFECE7FF),
+                        backgroundColor: Color(0xFFECE7FF),
                         child: Icon(
                           Icons.person_rounded,
                           color: Color(0xFF8065F6),
@@ -191,7 +207,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 26),
 
-                  // Welcome card
+                  // Welcome Card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),

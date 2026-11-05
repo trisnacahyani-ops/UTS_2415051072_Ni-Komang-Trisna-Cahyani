@@ -2,19 +2,21 @@ import '../models/color_info.dart';
 import '../services/color_api_service.dart';
 
 class ColorRepository {
-  final ColorApiService _apiService;
+  final ColorApiService apiService;
 
-  ColorRepository({required this._apiService});
+  ColorRepository({required this.apiService});
 
-  Future<ColorInfo> getColorInfo(String hex) {
-    return _apiService.getColorInfo(hex);
-  }
-
-  Future<List<String>> generatePalette({
-    required String hex,
+  Future<List<ColorInfo>> getColorPalette({
+    String hex = '8065F6',
     String mode = 'analogic',
     int count = 5,
-  }) {
-    return _apiService.generatePalette(hex: hex, mode: mode, count: count);
+  }) async {
+    final result = await apiService.getColorPalette(
+      hex: hex,
+      mode: mode,
+      count: count,
+    );
+
+    return result.map((json) => ColorInfo.fromJson(json)).toList();
   }
 }

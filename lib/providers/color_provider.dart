@@ -4,37 +4,20 @@ import '../models/color_info.dart';
 import '../repositories/color_repository.dart';
 
 class ColorProvider extends ChangeNotifier {
-  final ColorRepository _repository;
+  final ColorRepository repository;
 
-  ColorProvider({required this._repository});
+  ColorProvider({required this.repository});
 
+  List<ColorInfo> _colors = [];
   bool _isLoading = false;
   String? _errorMessage;
-  ColorInfo? _selectedColor;
-  List<String> _generatedPalette = [];
 
+  List<ColorInfo> get colors => _colors;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  ColorInfo? get selectedColor => _selectedColor;
-  List<String> get generatedPalette => _generatedPalette;
 
-  Future<void> fetchColorInfo(String hex) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      _selectedColor = await _repository.getColorInfo(hex);
-    } catch (e) {
-      _errorMessage = 'Gagal mengambil informasi warna.';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> generatePalette({
-    required String hex,
+  Future<void> fetchColors({
+    String hex = '8065F6',
     String mode = 'analogic',
     int count = 5,
   }) async {
@@ -43,21 +26,16 @@ class ColorProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _generatedPalette = await _repository.generatePalette(
+      _colors = await repository.getColorPalette(
         hex: hex,
         mode: mode,
         count: count,
       );
-    } catch (e) {
-      _errorMessage = 'Gagal membuat kombinasi warna.';
+    } catch (error) {
+      _errorMessage = 'Gagal mengambil data warna. Periksa koneksi internet.';
     } finally {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
   }
 }
