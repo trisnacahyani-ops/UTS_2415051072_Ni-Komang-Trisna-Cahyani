@@ -1,18 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+// CONFIG
+import 'config/supabase_config.dart';
+
+// PROVIDERS
 import 'providers/color_provider.dart';
-import 'repositories/color_repository.dart';
-import 'services/color_api_service.dart';
-import 'screens/explore_page.dart';
+import 'providers/palette_provider.dart';
 
-void main() {
+// REPOSITORIES
+import 'repositories/color_repository.dart';
+import 'repositories/palette_repository.dart';
+
+// SERVICES
+import 'services/color_api_service.dart';
+import 'services/palette_supabase_service.dart';
+
+// SCREENS
+import 'screens/explore_page.dart';
+import 'screens/collection_page.dart';
+
+// --------------------------------------------------
+// MAIN
+// --------------------------------------------------
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: SupabaseConfig.projectUrl,
+    publishableKey: SupabaseConfig.publishableKey,
+  );
+
   runApp(
     MultiProvider(
       providers: [
+        // COLOR PROVIDER - REST API
         ChangeNotifierProvider(
           create: (_) => ColorProvider(
             repository: ColorRepository(apiService: ColorApiService()),
+          ),
+        ),
+
+        // PALETTE PROVIDER - SUPABASE
+        ChangeNotifierProvider(
+          create: (_) => PaletteProvider(
+            repository: PaletteRepository(service: PaletteSupabaseService()),
           ),
         ),
       ],
@@ -20,6 +55,10 @@ void main() {
     ),
   );
 }
+
+// --------------------------------------------------
+// COLOR MATE APP
+// --------------------------------------------------
 
 class ColorMateApp extends StatelessWidget {
   const ColorMateApp({super.key});
@@ -29,18 +68,26 @@ class ColorMateApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ColorMate',
+
       theme: ThemeData(
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF8065F6)),
         scaffoldBackgroundColor: const Color(0xFFF8F7FC),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF8065F6),
-          brightness: Brightness.light,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFF8F7FC),
+          elevation: 0,
+          centerTitle: false,
         ),
       ),
+
       home: const MainShell(),
     );
   }
 }
+
+// --------------------------------------------------
+// MAIN NAVIGATION
+// --------------------------------------------------
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -55,11 +102,7 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _pages = const [
     HomeScreen(),
     ExplorePage(),
-    FeatureScreen(
-      title: 'My Collection',
-      subtitle: 'Your saved color palettes will appear here.',
-      icon: Icons.collections_rounded,
-    ),
+    CollectionPage(),
     FeatureScreen(
       title: 'Contrast Checker',
       subtitle: 'Check color contrast and accessibility.',
@@ -67,98 +110,50 @@ class _MainShellState extends State<MainShell> {
     ),
   ];
 
-  void _onDestinationSelected(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 700;
+    return Scaffold(
+      body: IndexedStack(index: _selectedIndex, children: _pages),
 
-        return Scaffold(
-          body: Row(
-            children: [
-              if (isWide)
-                NavigationRail(
-                  selectedIndex: _selectedIndex,
-                  onDestinationSelected: _onDestinationSelected,
-                  labelType: NavigationRailLabelType.all,
-                  backgroundColor: Colors.white,
-                  leading: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Icon(
-                      Icons.palette_rounded,
-                      color: Color(0xFF8065F6),
-                      size: 32,
-                    ),
-                  ),
-                  destinations: const [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.home_outlined),
-                      selectedIcon: Icon(Icons.home_rounded),
-                      label: Text('Home'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.color_lens_outlined),
-                      selectedIcon: Icon(Icons.color_lens_rounded),
-                      label: Text('Explore'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.collections_outlined),
-                      selectedIcon: Icon(Icons.collections_rounded),
-                      label: Text('Collection'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.contrast_outlined),
-                      selectedIcon: Icon(Icons.contrast_rounded),
-                      label: Text('Contrast'),
-                    ),
-                  ],
-                ),
-              Expanded(
-                child: IndexedStack(index: _selectedIndex, children: _pages),
-              ),
-            ],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        backgroundColor: Colors.white,
+        indicatorColor: const Color(0xFFEAE5FF),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Home',
           ),
-          bottomNavigationBar: isWide
-              ? null
-              : NavigationBar(
-                  selectedIndex: _selectedIndex,
-                  onDestinationSelected: _onDestinationSelected,
-                  backgroundColor: Colors.white,
-                  indicatorColor: const Color(0xFFEAE5FF),
-                  destinations: const [
-                    NavigationDestination(
-                      icon: Icon(Icons.home_outlined),
-                      selectedIcon: Icon(Icons.home_rounded),
-                      label: 'Home',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.color_lens_outlined),
-                      selectedIcon: Icon(Icons.color_lens_rounded),
-                      label: 'Explore',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.collections_outlined),
-                      selectedIcon: Icon(Icons.collections_rounded),
-                      label: 'Collection',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.contrast_outlined),
-                      selectedIcon: Icon(Icons.contrast_rounded),
-                      label: 'Contrast',
-                    ),
-                  ],
-                ),
-        );
-      },
+          NavigationDestination(
+            icon: Icon(Icons.palette_outlined),
+            selectedIcon: Icon(Icons.palette_rounded),
+            label: 'Explore',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.collections_outlined),
+            selectedIcon: Icon(Icons.collections_rounded),
+            label: 'Collection',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.contrast_outlined),
+            selectedIcon: Icon(Icons.contrast_rounded),
+            label: 'Contrast',
+          ),
+        ],
+      ),
     );
   }
 }
+
+// --------------------------------------------------
+// HOME SCREEN
+// --------------------------------------------------
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -167,255 +162,230 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7FC),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 800;
+      appBar: AppBar(
+        title: const Text(
+          'ColorMate',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 23,
+            color: Color(0xFF29243B),
+          ),
+        ),
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 700;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1100),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1000),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(25),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF8065F6), Color(0xFFFF8EAB)],
+                        ),
+                        borderRadius: BorderRadius.circular(26),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEAE5FF),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.palette_rounded,
-                              color: Color(0xFF8065F6),
-                              size: 28,
-                            ),
+                          Icon(
+                            Icons.color_lens_rounded,
+                            color: Colors.white,
+                            size: 40,
                           ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'ColorMate',
+                          SizedBox(height: 16),
+                          Text(
+                            'Welcome to ColorMate!',
                             style: TextStyle(
-                              fontSize: 24,
+                              color: Colors.white,
+                              fontSize: 25,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const Spacer(),
-                          const CircleAvatar(
-                            backgroundColor: Color(0xFFFFE3EC),
-                            child: Icon(
-                              Icons.person_rounded,
-                              color: Color(0xFFE85D8E),
+                          SizedBox(height: 8),
+                          Text(
+                            'Discover colors, create beautiful palettes, '
+                            'and find inspiration for your designs.',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              height: 1.5,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 32),
+                    ),
 
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(28),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF8065F6),
-                              Color(0xFFB47CF5),
-                              Color(0xFFFF8EAB),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Hello, Designer! 👋',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 25,
-                                fontWeight: FontWeight.bold,
+                    const SizedBox(height: 28),
+
+                    const Text(
+                      'Explore Features',
+                      style: TextStyle(
+                        fontSize: 21,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF29243B),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    GridView.count(
+                      crossAxisCount: isWide ? 3 : 2,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                      childAspectRatio: 1.15,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _FeatureCard(
+                          title: 'Explore Colors',
+                          subtitle: 'Discover color inspiration',
+                          icon: Icons.palette_rounded,
+                          color: const Color(0xFFEAE5FF),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ExplorePage(),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            const Text(
-                              'Find your perfect colors and create '
-                              'beautiful palettes for your next design.',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                height: 1.5,
+                            );
+                          },
+                        ),
+                        _FeatureCard(
+                          title: 'My Collection',
+                          subtitle: 'Your saved palettes',
+                          icon: Icons.collections_rounded,
+                          color: const Color(0xFFFFE3EC),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CollectionPage(),
                               ),
-                            ),
-                            const SizedBox(height: 22),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                context
-                                    .findAncestorStateOfType<_MainShellState>()
-                                    ?._onDestinationSelected(1);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: const Color(0xFF8065F6),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              icon: const Icon(Icons.color_lens_rounded),
-                              label: const Text('Explore Colors'),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      const Text(
-                        'Discover Features',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                        _FeatureCard(
+                          title: 'Color Picker',
+                          subtitle: 'Choose your own colors',
+                          icon: Icons.colorize_rounded,
+                          color: const Color(0xFFFFE8CF),
+                          onTap: () {
+                            _showComingSoon(context, 'Color Picker');
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      GridView.count(
-                        crossAxisCount: isWide ? 3 : 2,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                        childAspectRatio: isWide ? 1.35 : 1.05,
-                        children: [
-                          FeatureTile(
-                            title: 'Explore Colors',
-                            subtitle: 'Discover color combinations',
-                            icon: Icons.color_lens_rounded,
-                            color: const Color(0xFFEAE5FF),
-                            iconColor: const Color(0xFF8065F6),
-                            onTap: () {
-                              context
-                                  .findAncestorStateOfType<_MainShellState>()
-                                  ?._onDestinationSelected(1);
-                            },
-                          ),
-                          FeatureTile(
-                            title: 'My Collection',
-                            subtitle: 'Save your favorite palettes',
-                            icon: Icons.collections_rounded,
-                            color: const Color(0xFFFFE3EC),
-                            iconColor: const Color(0xFFE85D8E),
-                            onTap: () {
-                              context
-                                  .findAncestorStateOfType<_MainShellState>()
-                                  ?._onDestinationSelected(2);
-                            },
-                          ),
-                          FeatureTile(
-                            title: 'Contrast Checker',
-                            subtitle: 'Check color accessibility',
-                            icon: Icons.contrast_rounded,
-                            color: const Color(0xFFDDF5E8),
-                            iconColor: const Color(0xFF36A879),
-                            onTap: () {
-                              context
-                                  .findAncestorStateOfType<_MainShellState>()
-                                  ?._onDestinationSelected(3);
-                            },
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 28),
-
-                      const Text(
-                        'ColorMate helps you explore, create, '
-                        'and manage beautiful color palettes.',
-                        style: TextStyle(
-                          color: Colors.black54,
-                          fontSize: 13,
-                          height: 1.5,
+                        _FeatureCard(
+                          title: 'Palette Generator',
+                          subtitle: 'Generate color combinations',
+                          icon: Icons.auto_awesome_rounded,
+                          color: const Color(0xFFDDF5E8),
+                          onTap: () {
+                            _showComingSoon(context, 'Palette Generator');
+                          },
                         ),
-                      ),
-                    ],
-                  ),
+                        _FeatureCard(
+                          title: 'Contrast Checker',
+                          subtitle: 'Check color accessibility',
+                          icon: Icons.contrast_rounded,
+                          color: const Color(0xFFFFF1B8),
+                          onTap: () {
+                            _showComingSoon(context, 'Contrast Checker');
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature akan segera tersedia.'),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
 }
 
-class FeatureTile extends StatelessWidget {
+// --------------------------------------------------
+// FEATURE CARD
+// --------------------------------------------------
+
+class _FeatureCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
   final Color color;
-  final Color iconColor;
   final VoidCallback onTap;
 
-  const FeatureTile({
-    super.key,
+  const _FeatureCard({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.color,
-    required this.iconColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
+    return InkWell(
+      onTap: onTap,
       borderRadius: BorderRadius.circular(22),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, color: iconColor, size: 25),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(15),
               ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                subtitle,
-                style: const TextStyle(color: Colors.black54, fontSize: 11),
-              ),
-            ],
-          ),
+              child: Icon(icon, size: 27, color: const Color(0xFF8065F6)),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11, color: Colors.black54),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+// --------------------------------------------------
+// FEATURE SCREEN
+// --------------------------------------------------
 
 class FeatureScreen extends StatelessWidget {
   final String title;
@@ -433,25 +403,15 @@ class FeatureScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7FC),
-      appBar: AppBar(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFFF8F7FC),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAE5FF),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Icon(icon, size: 48, color: const Color(0xFF8065F6)),
-              ),
-              const SizedBox(height: 20),
+              Icon(icon, size: 70, color: const Color(0xFF8065F6)),
+              const SizedBox(height: 18),
               Text(
                 title,
                 style: const TextStyle(
@@ -463,7 +423,7 @@ class FeatureScreen extends StatelessWidget {
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.black54, height: 1.5),
+                style: const TextStyle(color: Colors.black54),
               ),
             ],
           ),
