@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class ColorMixingPage extends StatefulWidget {
   const ColorMixingPage({super.key});
@@ -10,468 +9,198 @@ class ColorMixingPage extends StatefulWidget {
 
 class _ColorMixingPageState extends State<ColorMixingPage>
     with SingleTickerProviderStateMixin {
-  final List<Color> colors = const [
-    Color(0xFF2196F3),
-    Color(0xFFFFD740),
-    Color(0xFFFF80AB),
-    Color(0xFF9C27B0),
-    Color(0xFF26A69A),
-    Color(0xFFFF8A65),
-    Color(0xFF8065F6),
-    Color(0xFF8BC34A),
-    Color(0xFF795548),
-    Color(0xFF607D8B),
+  Color firstColor = const Color(0xFF42A5F5);
+  Color secondColor = const Color(0xFFFFD740);
+
+  Color? mixedColor;
+  bool isMixed = false;
+
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+  late final Animation<Offset> _leftChickAnimation;
+  late final Animation<Offset> _rightChickAnimation;
+
+  final List<Map<String, dynamic>> colors = [
+    {'name': 'Red', 'color': const Color(0xFFEF5350)},
+    {'name': 'Orange', 'color': const Color(0xFFFF9800)},
+    {'name': 'Yellow', 'color': const Color(0xFFFFD740)},
+    {'name': 'Green', 'color': const Color(0xFF66BB6A)},
+    {'name': 'Blue', 'color': const Color(0xFF42A5F5)},
+    {'name': 'Purple', 'color': const Color(0xFFAB47BC)},
+    {'name': 'Pink', 'color': const Color(0xFFFF80AB)},
+    {'name': 'Turquoise', 'color': const Color(0xFF40C4C4)},
+    {'name': 'Peach', 'color': const Color(0xFFFFAB91)},
+    {'name': 'Mint', 'color': const Color(0xFF80CBC4)},
+    {'name': 'Lavender', 'color': const Color(0xFFB39DDB)},
+    {'name': 'Brown', 'color': const Color(0xFF8D6E63)},
   ];
-
-  final List<String> colorNames = const [
-    'Biru',
-    'Kuning',
-    'Pink',
-    'Ungu',
-    'Turquoise',
-    'Peach',
-    'Lavender',
-    'Hijau',
-    'Cokelat',
-    'Abu-abu',
-  ];
-
-  int firstIndex = 0;
-  int secondIndex = 1;
-
-  Color? resultColor;
-  bool hasMixed = false;
-
-  late final AnimationController animationController;
-  late final Animation<double> bounceAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    animationController = AnimationController(
+    _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1100),
     );
 
-    bounceAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: animationController, curve: Curves.elasticOut),
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
     );
+
+    _leftChickAnimation = Tween<Offset>(
+      begin: const Offset(-0.8, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+
+    _rightChickAnimation = Tween<Offset>(
+      begin: const Offset(0.8, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
   }
 
   @override
   void dispose() {
-    animationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  Color mixColors(Color first, Color second) {
-    final hsv1 = HSVColor.fromColor(first);
-    final hsv2 = HSVColor.fromColor(second);
-
-    double difference = hsv2.hue - hsv1.hue;
-
-    if (difference > 180) {
-      difference -= 360;
-    } else if (difference < -180) {
-      difference += 360;
-    }
-
-    final hue = (hsv1.hue + difference / 2 + 360) % 360;
-    final saturation = (hsv1.saturation + hsv2.saturation) / 2;
-    final value = (hsv1.value + hsv2.value) / 2;
-
-    return HSVColor.fromAHSV(1, hue, saturation, value).toColor();
-  }
-
   String getHex(Color color) {
-    return '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).toUpperCase().padLeft(6, '0')}';
+    return '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
   }
 
-  void mix() {
+  String getRgb(Color color) {
+    return 'RGB(${(color.r * 255).round()}, '
+        '${(color.g * 255).round()}, '
+        '${(color.b * 255).round()})';
+  }
+
+  void mixColors() {
     setState(() {
-      resultColor = mixColors(colors[firstIndex], colors[secondIndex]);
-      hasMixed = true;
+      mixedColor = Color.lerp(firstColor, secondColor, 0.5);
+      isMixed = true;
     });
 
-    animationController.forward(from: 0);
+    _controller.forward(from: 0);
   }
 
-  Future<void> copyHex() async {
-    if (resultColor == null) return;
+  void swapColors() {
+    setState(() {
+      final temp = firstColor;
+      firstColor = secondColor;
+      secondColor = temp;
+      mixedColor = null;
+      isMixed = false;
+    });
 
-    await Clipboard.setData(ClipboardData(text: getHex(resultColor!)));
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Kode HEX berhasil disalin!')));
+    _controller.reset();
   }
 
-  Widget colorOption(int index) {
-    final selected = firstIndex == index || secondIndex == index;
+  void resetColors() {
+    setState(() {
+      firstColor = const Color(0xFF42A5F5);
+      secondColor = const Color(0xFFFFD740);
+      mixedColor = null;
+      isMixed = false;
+    });
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (firstIndex == index) {
-            firstIndex = (index + 1) % colors.length;
-          } else if (secondIndex == index) {
-            secondIndex = (index + 1) % colors.length;
-          }
-        });
-      },
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: colors[index],
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: selected ? const Color(0xFF8065F6) : Colors.white,
-            width: selected ? 4 : 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colors[index].withValues(alpha: 0.25),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: selected
-            ? Icon(
-                Icons.check,
-                color: colors[index].computeLuminance() > 0.5
-                    ? Colors.black
-                    : Colors.white,
-              )
-            : null,
-      ),
-    );
+    _controller.reset();
   }
 
-  Widget chick(Color color, String label, {bool animated = false}) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ScaleTransition(
-          scale: animated
-              ? Tween<double>(begin: 0.7, end: 1).animate(
-                  CurvedAnimation(
-                    parent: animationController,
-                    curve: Curves.elasticOut,
-                  ),
-                )
-              : const AlwaysStoppedAnimation(1),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 105,
-                height: 105,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const Text('🐥', style: TextStyle(fontSize: 68)),
-              Positioned(
-                bottom: 5,
-                right: 3,
-                child: Container(
-                  width: 25,
-                  height: 25,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        Text(
-          getHex(color),
-          style: const TextStyle(fontSize: 11, color: Colors.black54),
-        ),
-      ],
-    );
+  void selectColor(int index, Color color) {
+    setState(() {
+      if (index == 0) {
+        firstColor = color;
+      } else {
+        secondColor = color;
+      }
+
+      mixedColor = null;
+      isMixed = false;
+    });
+
+    _controller.reset();
   }
 
   @override
   Widget build(BuildContext context) {
-    final firstColor = colors[firstIndex];
-    final secondColor = colors[secondIndex];
-
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F7FC),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF8F7FC),
         title: const Text(
           'Color Mixing',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          IconButton(
+            onPressed: resetColors,
+            tooltip: 'Reset colors',
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final wide = constraints.maxWidth >= 700;
+          final isWide = constraints.maxWidth >= 850;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 900),
+                constraints: const BoxConstraints(maxWidth: 1050),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF8065F6), Color(0xFFFF8EAB)],
-                        ),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('🐥🎨', style: TextStyle(fontSize: 38)),
-                          SizedBox(height: 12),
-                          Text(
-                            'Let’s Mix Colors!',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 24,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Pilih dua warna dan lihat warna baru '
-                            'yang terbentuk dari kombinasi keduanya.',
-                            style: TextStyle(color: Colors.white, height: 1.5),
-                          ),
-                        ],
-                      ),
-                    ),
-
+                    _buildHeader(),
                     const SizedBox(height: 25),
 
-                    const Text(
-                      'Choose Your Colors',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: Column(
+                    if (isWide)
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Pilih warna pertama dan kedua:',
-                            style: TextStyle(color: Colors.black54),
-                          ),
-                          const SizedBox(height: 18),
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: List.generate(colors.length, colorOption),
-                          ),
-                          const SizedBox(height: 18),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _selectedColor(
-                                  'Warna 1',
-                                  firstColor,
-                                  colorNames[firstIndex],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _selectedColor(
-                                  'Warna 2',
-                                  secondColor,
-                                  colorNames[secondIndex],
-                                ),
-                              ),
-                            ],
-                          ),
+                          Expanded(child: _buildColorSelector(0)),
+                          const SizedBox(width: 18),
+                          Expanded(child: _buildColorSelector(1)),
                         ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 25),
-
-                    const Text(
-                      'Color Mixing Station',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
+                      )
+                    else
+                      Column(
                         children: [
-                          Flex(
-                            direction: wide ? Axis.horizontal : Axis.vertical,
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              chick(firstColor, colorNames[firstIndex]),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 15,
-                                  horizontal: 12,
-                                ),
-                                child: Icon(
-                                  Icons.add_circle_rounded,
-                                  color: const Color(0xFF8065F6),
-                                  size: 35,
-                                ),
-                              ),
-                              chick(secondColor, colorNames[secondIndex]),
-                            ],
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          const Icon(
-                            Icons.arrow_downward_rounded,
-                            color: Color(0xFF8065F6),
-                            size: 32,
-                          ),
-
-                          const SizedBox(height: 15),
-
-                          if (hasMixed && resultColor != null)
-                            ScaleTransition(
-                              scale: bounceAnimation,
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(22),
-                                decoration: BoxDecoration(
-                                  color: resultColor,
-                                  borderRadius: BorderRadius.circular(22),
-                                ),
-                                child: Column(
-                                  children: [
-                                    const Text(
-                                      '🐥',
-                                      style: TextStyle(fontSize: 65),
-                                    ),
-                                    const Text(
-                                      'New Color!',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      getHex(resultColor!),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    ElevatedButton.icon(
-                                      onPressed: copyHex,
-                                      icon: const Icon(Icons.copy),
-                                      label: const Text('Copy HEX'),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          else
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(25),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF4F1FF),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Column(
-                                children: [
-                                  Text('🐣', style: TextStyle(fontSize: 65)),
-                                  Text(
-                                    'Warna hasil campuran akan muncul di sini!',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF665A85),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                          const SizedBox(height: 20),
-
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: ElevatedButton.icon(
-                              onPressed: mix,
-                              icon: const Icon(Icons.auto_awesome),
-                              label: const Text(
-                                'Campurkan Warna!',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF8065F6),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                            ),
-                          ),
+                          _buildColorSelector(0),
+                          const SizedBox(height: 16),
+                          _buildColorSelector(1),
                         ],
                       ),
-                    ),
 
                     const SizedBox(height: 18),
+                    Center(
+                      child: OutlinedButton.icon(
+                        onPressed: swapColors,
+                        icon: const Icon(Icons.swap_horiz_rounded),
+                        label: const Text('Swap Colors'),
+                      ),
+                    ),
 
-                    const Text(
-                      'Catatan: hasil pencampuran ini merupakan simulasi '
-                      'warna digital menggunakan pendekatan HSV, bukan '
-                      'simulasi pigmen cat secara fisik.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                        height: 1.5,
+                    const SizedBox(height: 25),
+                    _buildMixingArea(),
+
+                    const SizedBox(height: 25),
+                    _buildResult(),
+
+                    const SizedBox(height: 25),
+                    _buildInformation(),
+
+                    const SizedBox(height: 25),
+                    Center(
+                      child: Text(
+                        'ColorMate • Make Every Color Meaningful',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -484,35 +213,351 @@ class _ColorMixingPageState extends State<ColorMixingPage>
     );
   }
 
-  Widget _selectedColor(String title, Color color, String name) {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F7FC),
-        borderRadius: BorderRadius.circular(15),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF8065F6), Color(0xFFB18CFA), Color(0xFFFF91BB)],
+        ),
+        borderRadius: BorderRadius.circular(25),
       ),
-      child: Row(
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 35,
-            height: 35,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          Text(
+            '🐥 Let’s Mix Colors!',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(height: 9),
+          Text(
+            'Choose two colors and discover a beautiful new shade.',
+            style: TextStyle(color: Colors.white, fontSize: 14, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildColorSelector(int index) {
+    final selected = index == 0 ? firstColor : secondColor;
+    final title = index == 0 ? 'First Color' : 'Second Color';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                width: 55,
+                height: 55,
+                decoration: BoxDecoration(
+                  color: selected,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: selected.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      getHex(selected),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      getRgb(selected),
+                      style: const TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'Choose a color',
+            style: TextStyle(color: Colors.black54, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 11,
+            runSpacing: 11,
+            children: colors.map((item) {
+              final color = item['color'] as Color;
+              final isSelected = selected == color;
+
+              return Tooltip(
+                message: item['name'] as String,
+                child: GestureDetector(
+                  onTap: () => selectColor(index, color),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 35,
+                    height: 35,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFF8065F6)
+                            : Colors.black12,
+                        width: isSelected ? 3 : 1,
+                      ),
+                    ),
+                    child: isSelected
+                        ? Icon(
+                            Icons.check_rounded,
+                            color: color.computeLuminance() > 0.5
+                                ? Colors.black
+                                : Colors.white,
+                            size: 18,
+                          )
+                        : null,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMixingArea() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'Ready to Mix?',
+            style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Watch the little chicks bring your colors together!',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black54, fontSize: 12),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 115,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SlideTransition(
+                  position: _leftChickAnimation,
+                  child: const Text('🐥', style: TextStyle(fontSize: 65)),
+                ),
+                const SizedBox(width: 20),
+                const Text(
+                  '+',
+                  style: TextStyle(
+                    fontSize: 28,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 20),
+                SlideTransition(
+                  position: _rightChickAnimation,
+                  child: const Text('🐣', style: TextStyle(fontSize: 65)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 15),
+          ScaleTransition(
+            scale: _scaleAnimation,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              width: 105,
+              height: 75,
+              decoration: BoxDecoration(
+                color: mixedColor ?? const Color(0xFFF3F0FA),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: Center(
+                child: Text(
+                  isMixed ? '🐤' : '?',
+                  style: const TextStyle(fontSize: 35),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 22),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: mixColors,
+              icon: const Icon(Icons.auto_awesome_rounded),
+              label: const Text('Mix Colors'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8065F6),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResult() {
+    final result = mixedColor;
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      child: result == null
+          ? Container(
+              key: const ValueKey('empty'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(25),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAE5FF),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Column(
+                children: [
+                  Icon(
+                    Icons.color_lens_outlined,
+                    color: Color(0xFF8065F6),
+                    size: 42,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'Your mixed color will appear here!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF5F4BA8),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Container(
+              key: ValueKey(getHex(result)),
+              width: double.infinity,
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'Your New Color!',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    width: double.infinity,
+                    height: 145,
+                    decoration: BoxDecoration(
+                      color: result,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: Text(
+                        getHex(result),
+                        style: TextStyle(
+                          color: result.computeLuminance() > 0.5
+                              ? Colors.black
+                              : Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    getRgb(result),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  const Text(
+                    'Color successfully mixed!',
+                    style: TextStyle(color: Colors.green, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildInformation() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF2DF),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('💡', style: TextStyle(fontSize: 25)),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  'Color Mixing Tip',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
+                SizedBox(height: 6),
                 Text(
-                  name,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                  'Blue + Yellow can produce a green-like shade. '
+                  'Try different combinations to discover new colors!',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: Colors.black54,
                   ),
                 ),
               ],
