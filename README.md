@@ -1,8 +1,10 @@
 # 🎨 ColorMate
 
-**Explore Colors, Create Palettes, and Save Your Creativity.**
+### Explore Colors, Create Palettes, and Save Your Creativity.
 
-ColorMate merupakan aplikasi berbasis Flutter yang membantu pengguna mengeksplorasi warna, melihat informasi detail warna, membuat kombinasi palet, serta menyimpan warna dan palet favorit.
+ColorMate adalah aplikasi berbasis Flutter yang dirancang untuk membantu pengguna mengeksplorasi warna, melihat informasi warna, mencoba pencampuran warna, serta menyimpan warna favorit. Aplikasi ini juga memanfaatkan REST API untuk memperoleh informasi dan kombinasi warna serta Supabase untuk pengelolaan data koleksi.
+
+---
 
 ## 👩‍💻 Project Identity
 
@@ -18,165 +20,282 @@ ColorMate merupakan aplikasi berbasis Flutter yang membantu pengguna mengeksplor
 | Mata Kuliah | Pemrograman Mobile |
 | Dosen Pengampu | Dr. Ir. I Ketut Resika Arthana, S.T., M.Kom. |
 
+---
+
 ## ✨ Features
 
-- **Explore Colors** – Menjelajahi berbagai pilihan warna.
-- **Color Detail** – Melihat informasi detail dari warna yang dipilih.
-- **Color Picker** – Memilih dan mendapatkan informasi warna.
-- **Palette Generator** – Membuat kombinasi palet warna.
-- **Color Collection** – Menyimpan dan mengelola koleksi warna.
-- **Palette Collection** – Menyimpan dan mengelola koleksi palet.
-- **CRUD Operations** – Menambahkan, melihat, memperbarui, dan menghapus data koleksi.
-- **Responsive Design** – Mendukung tampilan desktop dan perangkat mobile.
+ColorMate memiliki beberapa fitur utama, yaitu:
+
+1. **Explore Colors**  
+   Menjelajahi berbagai pilihan warna melalui tampilan yang interaktif.
+
+2. **Color Detail**  
+   Menampilkan informasi detail mengenai warna yang dipilih.
+
+3. **Color Picker**  
+   Memilih warna dan memperoleh informasi kode warna.
+
+4. **Color Mixing**  
+   Mempelajari pencampuran warna dan melihat hasil kombinasi warna.
+
+5. **Palette Generator**  
+   Membantu menghasilkan kombinasi palet warna.
+
+6. **Save Color**  
+   Menyimpan warna pilihan ke dalam koleksi.
+
+7. **Color Collection**  
+   Melihat dan mengelola warna yang telah disimpan.
+
+8. **Palette Collection**  
+   Mengelola koleksi palet warna.
+
+9. **CRUD Operations**  
+   Menambahkan, menampilkan, memperbarui, dan menghapus data koleksi.
+
+10. **Responsive Design**  
+    Mendukung tampilan aplikasi pada perangkat desktop dan mobile.
+
+---
 
 ## 🛠️ Technologies
 
-- Flutter
-- Dart
-- Material Design 3
-- Provider
-- REST API
-- Supabase
-- PostgreSQL
-- Git & GitHub
+Teknologi yang digunakan dalam pengembangan ColorMate:
 
-## 🌐 API Integration
+| Teknologi | Kegunaan |
+|---|---|
+| Flutter | Framework pengembangan aplikasi |
+| Dart | Bahasa pemrograman |
+| Material Design 3 | Desain antarmuka |
+| Provider | State management |
+| REST API | Mengambil data warna |
+| The Color API | Sumber informasi dan kombinasi warna |
+| Supabase | Backend dan pengelolaan data |
+| PostgreSQL | Database |
+| Git | Version control |
+| GitHub | Penyimpanan repository |
 
-ColorMate menggunakan **The Color API** untuk mendapatkan informasi dan kombinasi warna.
+---
 
-API Endpoint:
+## 🌐 REST API Integration
 
-`https://www.thecolorapi.com/scheme`
+ColorMate menggunakan **The Color API** untuk memperoleh informasi warna dan menghasilkan kombinasi warna.
 
-Metode yang digunakan adalah GET dengan format respons JSON.
+**API Endpoint:**
+
+```text
+https://www.thecolorapi.com/scheme
+```
+
+**HTTP Method:** GET
+
+**Response Format:** JSON
+
+Data dari API diproses menggunakan model Dart agar dapat digunakan dan ditampilkan pada antarmuka aplikasi.
+
+---
 
 ## 🗄️ Database
 
-ColorMate menggunakan Supabase sebagai backend dan PostgreSQL sebagai database.
+ColorMate menggunakan Supabase sebagai layanan backend dengan PostgreSQL sebagai sistem database.
 
-Database digunakan untuk menyimpan serta mengelola data koleksi warna dan palet melalui operasi CRUD.
+Database digunakan untuk mendukung pengelolaan koleksi warna dan palet.
+
+Operasi database yang diterapkan meliputi:
+
+- **Create:** Menambahkan data warna atau palet.
+- **Read:** Menampilkan data koleksi.
+- **Update:** Memperbarui data yang tersimpan.
+- **Delete:** Menghapus data dari koleksi.
+
+---
 
 ## 🏗️ Project Architecture
 
-Project menggunakan pemisahan tanggung jawab dengan pola Provider, Repository, dan Service.
+Pengembangan ColorMate menggunakan pemisahan tanggung jawab dengan pendekatan Provider, Repository, dan Service.
+
+Struktur direktori utama:
 
 ```text
 lib/
 ├── config/
+│   └── supabase_config.dart
+│
 ├── models/
+│   ├── color_info.dart
+│   └── palette.dart
+│
 ├── providers/
+│   ├── color_provider.dart
+│   └── palette_provider.dart
+│
 ├── repositories/
+│   ├── color_repository.dart
+│   └── palette_repository.dart
+│
 ├── screens/
+│   ├── collection_page.dart
+│   ├── color_detail_page.dart
+│   └── explore_page.dart
+│
 ├── services/
+│   ├── color_api_service.dart
+│   └── palette_supabase_service.dart
+│
 ├── widgets/
+│   ├── color_card.dart
+│   ├── color_swatch.dart
+│   └── loading_widget.dart
+│
 └── main.dart
 ```
 
-Alur arsitektur:
+### Architecture Flow
 
 ```text
-Screens
-   ↓
-Providers
-   ↓
-Repositories
-   ↓
-Services
-   ↓
+UI / Screens
+     |
+     v
+  Providers
+     |
+     v
+ Repositories
+     |
+     v
+   Services
+     |
+     v
 REST API / Supabase
 ```
 
+**Penjelasan:**
+
+- **Models:** Mengatur struktur data warna dan palet.
+- **Services:** Menangani komunikasi dengan REST API dan Supabase.
+- **Repositories:** Menjadi penghubung antara Provider dan Service.
+- **Providers:** Mengelola state aplikasi menggunakan Provider.
+- **Screens:** Menampilkan halaman aplikasi.
+- **Widgets:** Menyediakan komponen antarmuka yang dapat digunakan kembali.
+- **Config:** Menyimpan konfigurasi koneksi Supabase.
+
+---
+
 ## 📸 Application Screenshots
 
+Berikut dokumentasi tampilan aplikasi ColorMate.
+
 ### 1. Home
-![Home](screenshots/HOME.png)
+
+![Home](screenshots/HOME%20(2).png)
 
 ### 2. Explore Colors
-![Explore Colors](screenshots/EXPLORE_COLORS.png)
 
-### 3. Color Detail
-![Color Detail](screenshots/COLOR_DETAIL.png)
+![Explore Colors](screenshots/EXPLORE%20(2).png)
 
-### 4. Color Picker
-![Color Picker](screenshots/COLOR_PICKER.png)
+![Explore Colors Additional](screenshots/EXPLORE3.png)
 
-### 5. Palette Generator
-![Palette Generator](screenshots/PALETTE_GENERATOR.png)
+### 3. Color Collection
 
-### 6. Color Collection
-![Color Collection](screenshots/COLOR_COLLECTION.png)
+![Color Collection](screenshots/COLECTION.png)
 
-### 7. Palette Collection
-![Palette Collection](screenshots/PALETTE_COLLECTION.png)
+### 4. Color Mixing
 
-### 8. Responsive Design
+![Color Mixing](screenshots/MIX.png)
 
-**Desktop View**
+![Color Mixing Additional](screenshots/MIX2.png)
 
-![Desktop](screenshots/RESPONSIVE_DESKTOP.png)
+### 5. Save Color
 
-**Mobile View**
+![Save Color](screenshots/SAVE%20COLOR.png)
 
-![Mobile](screenshots/RESPONSIVE_MOBILE.png)
+![Save Color Additional](screenshots/SAVE%20COLOR%202.png)
 
-### 9. API Integration
-![API Integration](screenshots/API_INTEGRATION.png)
+### 6. Additional Application Screenshot
 
-### 10. Supabase Database
-![Supabase Database](screenshots/SUPABASE_DATABASE.png)
+![Additional Screenshot](screenshots/Cuplikan%20layar%202026-11-11%20081928.png)
+
+---
 
 ## 🚀 How to Run
 
-Pastikan Flutter dan Dart sudah terpasang di perangkat.
+Untuk menjalankan ColorMate secara lokal, pastikan perangkat sudah memiliki Flutter SDK dan Dart SDK.
 
-1. Clone repository:
+### 1. Clone Repository
 
 ```bash
 git clone https://github.com/trisnacahyani-ops/colormate.git
 ```
 
-2. Masuk ke folder project:
+### 2. Masuk ke Folder Project
 
 ```bash
 cd colormate
 ```
 
-3. Install dependencies:
+### 3. Install Dependencies
 
 ```bash
 flutter pub get
 ```
 
-4. Jalankan aplikasi:
+### 4. Configure Supabase
+
+Pastikan konfigurasi Supabase pada project sudah diisi menggunakan URL project dan publishable key yang sesuai.
+
+Jangan membagikan secret key atau service role key ke repository publik.
+
+### 5. Run Application
 
 ```bash
 flutter run
 ```
 
+---
+
 ## 📱 Build APK
 
-Untuk membuat APK release, jalankan:
+Untuk menghasilkan aplikasi Android dalam format APK release, jalankan perintah:
 
 ```bash
 flutter build apk --release
 ```
 
-Hasil APK tersedia di:
+File APK akan tersedia pada direktori:
 
 ```text
 build/app/outputs/flutter-apk/app-release.apk
 ```
 
+---
+
 ## 🌍 Live Demo
 
-Aplikasi versi web dapat diakses melalui:
+ColorMate juga tersedia dalam versi web yang dapat diakses melalui browser.
+
+**Live Demo:**
 
 https://inquisitive-crisp-18e26b.netlify.app/
 
+---
+
 ## 🔗 GitHub Repository
+
+Source code ColorMate dapat dilihat melalui repository berikut:
 
 https://github.com/trisnacahyani-ops/colormate
 
 ---
 
-**ColorMate — Explore Colors, Create Palettes, and Save Your Creativity.**
+## 🎯 Project Objective
+
+Project ColorMate dikembangkan sebagai implementasi pembelajaran Pemrograman Mobile dengan menerapkan Flutter, pengelolaan state, integrasi REST API, serta operasi CRUD menggunakan Supabase.
+
+Melalui project ini, diharapkan pengguna dapat mengeksplorasi warna dan mengelola koleksi warna dengan lebih mudah melalui aplikasi yang interaktif dan responsif.
+
+---
+
+<p align="center">
+  <b>ColorMate — Explore Colors, Create Palettes, and Save Your Creativity.</b>
+  <br>
+  Developed with Flutter 💜
+</p>
