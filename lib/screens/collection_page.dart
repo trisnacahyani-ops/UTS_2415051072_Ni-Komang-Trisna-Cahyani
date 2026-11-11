@@ -346,7 +346,7 @@ ${palette.colors.map(normalizeHex).join('\n')}
                 );
               }).toList(),
             ),
-            const Spacer(),
+
             const Divider(height: 24),
             Row(
               children: [
@@ -489,7 +489,7 @@ ${palette.colors.map(normalizeHex).join('\n')}
                   crossAxisCount: columns,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
-                  mainAxisExtent: 270,
+                  mainAxisExtent: 330,
                 ),
                 itemBuilder: (context, index) {
                   return buildPaletteCard(provider.palettes[index]);

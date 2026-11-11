@@ -37,6 +37,7 @@ class _ColorWheelState extends State<ColorWheel> {
     final center = Offset(size.width / 2, size.height / 2);
     final dx = position.dx - center.dx;
     final dy = position.dy - center.dy;
+
     final distance = math.sqrt(dx * dx + dy * dy);
     final radius = size.width / 2;
 
@@ -83,8 +84,11 @@ class _ColorWheelState extends State<ColorWheel> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final diameter = math.min(constraints.maxWidth, 340.0);
+        final availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 300.0;
 
+        final diameter = math.min(availableWidth, 300.0);
         final size = Size(diameter, diameter);
 
         return Center(
@@ -92,6 +96,7 @@ class _ColorWheelState extends State<ColorWheel> {
             width: diameter,
             height: diameter,
             child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onPanStart: (details) => _handlePanStart(details, size),
               onPanUpdate: (details) => _handlePanUpdate(details, size),
               onPanEnd: (_) => lastAngle = null,
@@ -154,7 +159,6 @@ class _ColorWheelPainter extends CustomPainter {
 
     for (int i = 0; i < segments; i++) {
       final hue = i.toDouble();
-
       final startAngle = (hue * math.pi / 180) + rotation;
 
       final paint = Paint()
@@ -171,7 +175,6 @@ class _ColorWheelPainter extends CustomPainter {
     }
 
     final markerAngle = (selectedHue * math.pi / 180) + rotation;
-
     final markerRadius = radius * 0.85;
 
     final marker = Offset(

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/palette.dart';
+import '../providers/palette_provider.dart';
 
 class ColorMixingPage extends StatefulWidget {
   const ColorMixingPage({super.key});
@@ -14,6 +18,7 @@ class _ColorMixingPageState extends State<ColorMixingPage>
 
   Color? mixedColor;
   bool isMixed = false;
+  bool isSaving = false;
 
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
@@ -123,6 +128,87 @@ class _ColorMixingPageState extends State<ColorMixingPage>
     _controller.reset();
   }
 
+  Future<void> saveMixedColor() async {
+    if (mixedColor == null || isSaving) return;
+
+    final nameController = TextEditingController(text: 'My Color Mixing');
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Save Mixed Color'),
+          content: TextField(
+            controller: nameController,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Collection Name',
+              hintText: 'Enter palette name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, nameController.text.trim());
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    nameController.dispose();
+
+    if (!mounted || name == null) return;
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a collection name.')),
+      );
+      return;
+    }
+
+    setState(() => isSaving = true);
+
+    try {
+      final palette = Palette(
+        name: name,
+        colors: [getHex(firstColor), getHex(secondColor), getHex(mixedColor!)],
+        colorType: 'Color Mixing',
+      );
+
+      await context.read<PaletteProvider>().addPalette(palette);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mixed color saved to My Collection!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save color: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => isSaving = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,6 +262,7 @@ class _ColorMixingPageState extends State<ColorMixingPage>
                       ),
 
                     const SizedBox(height: 18),
+
                     Center(
                       child: OutlinedButton.icon(
                         onPressed: swapColors,
@@ -186,14 +273,12 @@ class _ColorMixingPageState extends State<ColorMixingPage>
 
                     const SizedBox(height: 25),
                     _buildMixingArea(),
-
                     const SizedBox(height: 25),
                     _buildResult(),
-
                     const SizedBox(height: 25),
                     _buildInformation(),
-
                     const SizedBox(height: 25),
+
                     Center(
                       child: Text(
                         'ColorMate • Make Every Color Meaningful',
@@ -263,6 +348,7 @@ class _ColorMixingPageState extends State<ColorMixingPage>
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 14),
+
           Row(
             children: [
               AnimatedContainer(
@@ -303,12 +389,16 @@ class _ColorMixingPageState extends State<ColorMixingPage>
               ),
             ],
           ),
+
           const SizedBox(height: 18),
+
           const Text(
             'Choose a color',
             style: TextStyle(color: Colors.black54, fontSize: 12),
           ),
+
           const SizedBox(height: 12),
+
           Wrap(
             spacing: 11,
             runSpacing: 11,
@@ -374,6 +464,7 @@ class _ColorMixingPageState extends State<ColorMixingPage>
             style: TextStyle(color: Colors.black54, fontSize: 12),
           ),
           const SizedBox(height: 24),
+
           SizedBox(
             height: 115,
             child: Row(
@@ -400,7 +491,9 @@ class _ColorMixingPageState extends State<ColorMixingPage>
               ],
             ),
           ),
+
           const SizedBox(height: 15),
+
           ScaleTransition(
             scale: _scaleAnimation,
             child: AnimatedContainer(
@@ -420,7 +513,9 @@ class _ColorMixingPageState extends State<ColorMixingPage>
               ),
             ),
           ),
+
           const SizedBox(height: 22),
+
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -490,6 +585,7 @@ class _ColorMixingPageState extends State<ColorMixingPage>
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 18),
+
                   Container(
                     width: double.infinity,
                     height: 145,
@@ -510,7 +606,9 @@ class _ColorMixingPageState extends State<ColorMixingPage>
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 18),
+
                   Text(
                     getRgb(result),
                     style: const TextStyle(
@@ -518,10 +616,42 @@ class _ColorMixingPageState extends State<ColorMixingPage>
                       fontSize: 15,
                     ),
                   ),
+
                   const SizedBox(height: 7),
+
                   const Text(
                     'Color successfully mixed!',
                     style: TextStyle(color: Colors.green, fontSize: 12),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: isSaving ? null : saveMixedColor,
+                      icon: isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.bookmark_add_rounded),
+                      label: Text(
+                        isSaving ? 'Saving...' : 'Save to My Collection',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8065F6),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),

@@ -387,7 +387,7 @@ class HomeScreen extends StatelessWidget {
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisSpacing: 15,
                         mainAxisSpacing: 15,
-                        childAspectRatio: isWide ? 1.35 : 1.05,
+                        childAspectRatio: isWide ? 1.20 : 0.85,
                         children: [
                           _FeatureCard(
                             title: 'Explore Colors',
@@ -554,21 +554,22 @@ class _FeatureCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(22),
         child: Padding(
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.all(14),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 45,
-                height: 45,
+                width: 43,
+                height: 43,
                 decoration: BoxDecoration(
                   color: color,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: iconColor, size: 25),
+                child: Icon(icon, color: iconColor, size: 24),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
                 title,
                 maxLines: 1,
@@ -578,15 +579,15 @@ class _FeatureCard extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 4),
               Text(
                 subtitle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.grey,
-                  fontSize: 11,
-                  height: 1.3,
+                  fontSize: 10,
+                  height: 1.2,
                 ),
               ),
             ],
